@@ -1,30 +1,60 @@
-import axios from 'axios';
-import { throttledGetDataFromApi } from './index';
+import axios, {
+  AxiosRequestConfig,
+  AxiosInstance,
+  CreateAxiosDefaults,
+} from 'axios';
+import { THROTTLE_TIME, throttledGetDataFromApi } from './index';
 
 const BASE_URL = 'https://jsonplaceholder.typicode.com';
 const RELATIVE_URL = '/todos/1';
 
+const config = { baseURL: BASE_URL };
+const response = { data: BASE_URL };
+const axiosClient = axios.create(config);
+
 describe('throttledGetDataFromApi', () => {
+  let getMock: jest.SpyInstance<
+    Promise<unknown>,
+    [url: string, config?: AxiosRequestConfig<unknown> | undefined],
+    unknown
+  >;
+  let createMock: jest.SpyInstance<
+    AxiosInstance,
+    [config?: CreateAxiosDefaults<unknown> | undefined],
+    unknown
+  >;
+
   beforeEach(() => {
-    jest.clearAllTimers();
+    getMock = jest
+      .spyOn(axiosClient, 'get')
+      .mockImplementation(() => Promise.resolve(response));
+    createMock = jest
+      .spyOn(axios, 'create')
+      .mockImplementation(() => axiosClient);
   });
 
   beforeAll(() => jest.useFakeTimers());
   afterAll(() => jest.useRealTimers());
 
   test('should create instance with provided base url', async () => {
-    jest.spyOn(axios, 'create');
+    await throttledGetDataFromApi(RELATIVE_URL);
+
+    expect(createMock).toBeCalledWith({ baseURL: BASE_URL });
+  });
+
+  test('should perform request to correct provided url', async () => {
+    jest.advanceTimersByTime(THROTTLE_TIME);
 
     await throttledGetDataFromApi(RELATIVE_URL);
 
-    expect(axios.create).toBeCalledWith({ baseURL: BASE_URL });
-    expect(axios.create).toReturn();
+    expect(getMock).toBeCalledWith(RELATIVE_URL);
   });
 
-  // test('should perform request to correct provided url', async () => {
-  // });
+  test('should return response data', async () => {
+    jest.advanceTimersByTime(THROTTLE_TIME);
 
-  // test('should return response data', async () => {
-  //   expect(await throttledGetDataFromApi(RELATIVE_URL)).toBe(RELATIVE_URL);
-  // });
+    await throttledGetDataFromApi(RELATIVE_URL);
+
+    expect(await throttledGetDataFromApi(RELATIVE_URL)).toBe(response.data);
+  });
 });
