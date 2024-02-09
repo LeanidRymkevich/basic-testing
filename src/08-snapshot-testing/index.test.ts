@@ -15,12 +15,28 @@ const TEST_LIST = {
   },
 };
 
+const SNAPSHOT = `
+{
+  "next": {
+    "next": {
+      "next": {
+        "next": null,
+        "value": null,
+      },
+      "value": 3,
+    },
+    "value": 2,
+  },
+  "value": 1,
+}
+`;
+
 describe('generateLinkedList', () => {
   test('should generate linked list from values 1', () => {
     expect(generateLinkedList(ARRAY)).toStrictEqual(TEST_LIST);
   });
 
   test('should generate linked list from values 2', () => {
-    expect(generateLinkedList(ARRAY)).toMatchSnapshot();
+    expect(generateLinkedList(ARRAY)).toMatchInlineSnapshot(SNAPSHOT);
   });
 });
